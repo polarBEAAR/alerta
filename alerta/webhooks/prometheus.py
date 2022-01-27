@@ -45,7 +45,8 @@ def parse_prometheus(alert: JSON, external_url: str) -> Alert:
     # labels
     resource = labels.pop('exported_instance', None) or labels.pop('instance', 'n/a')
     event = labels.pop('event', None) or labels.pop('alertname')
-    environment = labels.pop('environment', current_app.config['DEFAULT_ENVIRONMENT'])
+    #environment = labels.pop('environment', current_app.config['DEFAULT_ENVIRONMENT'])
+    environment = labels.pop('cluster_id', current_app.config['DEFAULT_ENVIRONMENT'])
     customer = labels.pop('customer', None)
     correlate = labels.pop('correlate').split(',') if 'correlate' in labels else None
     service = labels.pop('service', '').split(',')
