@@ -12,6 +12,22 @@ from . import WebhookBase
 JSON = Dict[str, Any]
 dt = datetime.datetime
 
+def customer_def(cloud_name):
+    if ((cloud_name == "eu-production-mos") or (cloud_name == "presales-mos") or (cloud_name == "eu-mos-tf-region")):
+        return "Mirantis IT"
+    elif ((cloud_name == "mcc-mke-demo-prod") or (cloud_name == "mcc-mke-demo-stage")):
+        return "Pre-sales demo Equinix"
+    else:
+        return None
+
+def mgmt_def(cloud_id):
+    if (cloud_id == "8752eb49-cbe2-4a15-9171-084f5fc44e2f"):
+        return "Pre-sales MGMT", "Mirantis IT"
+    elif (cloud_id == "d4a94878-140c-469a-b210-ad076ffbb2fa"):
+        return "EU MGMT", "Mirantis IT"
+    elif (cloud_id == "51f45b9f-6e0f-4654-a880-f269e9c50c64"):
+        return "Demo Equinix MGMT", "Pre-sales demo Equinix"
+    return "MGMT", None
 
 def parse_prometheus(alert: JSON, external_url: str) -> Alert:
 
@@ -46,7 +62,22 @@ def parse_prometheus(alert: JSON, external_url: str) -> Alert:
     resource = labels.pop('exported_instance', None) or labels.pop('instance', 'n/a')
     event = labels.pop('event', None) or labels.pop('alertname')
     #environment = labels.pop('environment', current_app.config['DEFAULT_ENVIRONMENT'])
-    environment = labels.pop('cluster_id', current_app.config['DEFAULT_ENVIRONMENT'])
+    
+    ## customer and environment fields
+
+    try:
+        env = labels.get('cluster_id', current_app.config['DEFAULT_ENVIRONMENT']).split('/')
+        env_name = env[1]
+        env_id = env[2]
+        if (env_name == "kaas-mgmt"):
+            environment, resource = mgmt_def(env_id)
+        else:
+            environment = env_name
+            resource = customer_def(env_name)
+    except Exception:
+        environment = labels.get('environment', current_app.config['DEFAULT_ENVIRONMENT']
+        resource = None
+    
     customer = labels.pop('customer', None)
     correlate = labels.pop('correlate').split(',') if 'correlate' in labels else None
     service = labels.pop('service', '').split(',')
